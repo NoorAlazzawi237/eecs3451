@@ -1,0 +1,44 @@
+
+% Parameters
+t = 0:0.01:10; % Time vector from 0 to 10 seconds with 0.01 increments
+f = 2; % Frequency in Hz
+omega = 2 * pi * f; % Angular frequency
+theta_values = 0:45:180; % Theta values from 0 to 180 degrees
+
+% Part (a): Plot x1(t) with θ = 60°
+theta = 60; % Degrees
+x1 = 0.1 * sin(t) + 0.2 * cos(omega * t + deg2rad(theta)); % Convert theta to radians
+
+figure;
+plot(t, x1, 'b', 'LineWidth', 2);
+xlabel('Time (s)');
+ylabel('x1(t)');
+title('Plot of x1(t) with θ = 60°');
+grid on;
+
+% Part (b): Investigate waveforms by varying θ
+hold on; % Hold the current plot
+colors = lines(length(theta_values)); % Get distinct colors for each plot
+
+for i = 1:length(theta_values)
+    theta = theta_values(i); % Current theta value
+    x1 = 0.1 * sin(t) + 0.2 * cos(omega * t + deg2rad(theta)); % Calculate x1(t)
+    plot(t, x1, 'Color', colors(i,:), 'DisplayName', sprintf('\\theta = %d°', theta)); % Plot with legend
+end
+
+% Add legend and labels
+legend('show');
+xlabel('Time (s)');
+ylabel('x1(t)');
+title('Waveforms of x1(t) for varying θ');
+grid on;
+hold off;
+
+% Part (c): Check if x1(t) is periodic
+% The signal is periodic if the angular frequency is constant and the components are periodic.
+is_periodic = mod(omega, 2*pi) == 0; % Check if the frequency is a rational multiple of 2*pi
+if is_periodic
+    disp('x1(t) is a periodic signal.');
+else
+    disp('x1(t) is not a periodic signal.');
+end
