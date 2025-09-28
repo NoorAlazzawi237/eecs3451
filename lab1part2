@@ -1,1 +1,19 @@
 
+% Parameters
+t = 0:0.01:10; % Time vector
+e_t = exp(-0.1 * pi * t); % Envelope function
+x2_t = e_t .* cos(2 * pi * t); % Signal x2(t)
+
+% Unit-step function u(t-2)
+u_t = heaviside(t - 2); % Heaviside function
+
+% New signal x2b(t)
+x2b_t = x2_t .* u_t; % Multiply x2(t) with u(t-2)
+
+% Plotting
+figure;
+plot(t, x2b_t, 'g', 'LineWidth', 2); % Signal x2b(t) in green
+xlabel('Time (s)');
+ylabel('Amplitude');
+title('Plot of x2b(t)');
+grid on;
