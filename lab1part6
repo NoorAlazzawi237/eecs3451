@@ -1,0 +1,32 @@
+
+% Define shifted-scaled signal: 2x(t+1)
+t_shift = t + 1;  % argument shift
+x_shift = zeros(size(t));
+
+% Region 1: -2 <= (t+1) < 0
+mask1 = (t_shift >= -2 & t_shift < 0);
+x_shift(mask1) = 0.25 * t_shift(mask1);
+
+% Region 2: 0 <= (t+1) < 0.5
+mask2 = (t_shift >= 0 & t_shift < 0.5);
+x_shift(mask2) = 1.5;
+
+% Region 3: 0.5 <= (t+1) <= 2
+mask3 = (t_shift >= 0.5 & t_shift <= 2);
+x_shift(mask3) = -t_shift(mask3) + 2;
+
+x_shift = 2 * x_shift;  % scaling
+
+% -------- Plot 1: x(t) --------
+figure;
+plot(t, x, 'b', 'LineWidth', 1.5); hold on;
+grid on;
+xlabel('t'); ylabel('x(t)');
+title('Original signal x(t)');
+
+% -------- Plot 2: 2x(t+1) --------
+figure;
+plot(t, x_shift, 'r', 'LineWidth', 1.5); hold on;
+grid on;
+xlabel('t'); ylabel('2x(t+1)');
+title('Shifted and scaled signal 2x(t+1)');
