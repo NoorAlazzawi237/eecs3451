@@ -1,0 +1,32 @@
+% Main part
+clear; clc; close all;
+
+V = 10; 
+f = 2; 
+N = 150; 
+T = 1/f;
+t = linspace(0, 2*T, 4000);
+
+[Pmax, t, x_sq, x1] = squarewave(f, V, N, t);
+fprintf('Maximum instantaneous power of fundamental: %.4f W\n', Pmax);
+
+% --------- local function defined below ---------
+function [Pmax_fund, t, x_sq, x1] = squarewave(f, V, N, t)
+    n_odd = 1:2:(2*ceil(N/2)-1);
+    A = 4*V/pi;
+    x1 = A*sin(2*pi*f*t);
+    x_sq = zeros(size(t));
+    for n = n_odd
+        x_sq = x_sq + (A/n)*sin(n*2*pi*f*t);
+    end
+    Pmax_fund = A^2;
+
+    figure;
+    plot(t, x_sq, 'b', 'LineWidth', 1.5); hold on;
+    plot(t, x1, 'r--', 'LineWidth', 1.5);
+    grid on;
+    xlabel('Time (s)'); ylabel('Amplitude');
+    title(sprintf('Square wave with V=%g, f=%g Hz, N=%d', V,f,N));
+    legend('x_{sq}(t)','Fundamental x_1(t)');
+end
+
