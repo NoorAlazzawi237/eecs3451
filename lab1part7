@@ -1,0 +1,77 @@
+%% Q7 — Discrete-Time scaling practice
+clear; clc; close all;
+
+% Base DT signal: x[n] = (1 - e^{-0.01 n}) cos(pi n / 10), 0 <= n <= 100
+nx = 0:100;
+x  = (1 - exp(-0.01*nx)) .* cos(pi*nx/10);
+
+%% (1) Plot the DT signal
+figure;
+stem(nx, x, 'filled'); grid on;
+xlabel('n'); ylabel('x[n]'); title('x[n] = (1 - e^{-0.01 n}) \cdot cos(\pin/10)');
+
+%% (2) Plot y[n] = x[n/2] and z[n] = x[4n]
+[y, ny] = x_of_n_over_M(x, nx, 2);    % upsample (zero insertion)
+[z, nz] = x_of_Mn(x, nx, 4);          % downsample by 4
+
+figure;
+subplot(2,1,1);
+stem(ny, y, 'filled'); grid on;
+xlabel('n'); ylabel('y[n]'); title('y[n] = x[n/2]');
+
+subplot(2,1,2);
+stem(nz, z, 'filled'); grid on;
+xlabel('n'); ylabel('z[n]'); title('z[n] = x[4n]');
+
+%% (3) y[n] = x[n/4],  z[n] = y[4n]; plot both and state relationship
+[y4, ny4] = x_of_n_over_M(x, nx, 4);        % up by 4
+[z4, nz4] = x_of_Mn(y4, ny4, 4);            % then down by 4
+
+figure;
+stem(ny4, y4, 'filled'); hold on;
+stem(nz4, z4, 'filled'); grid on;
+xlabel('n'); ylabel('amplitude');
+title('Part (3): y[n] = x[n/4],  z[n] = y[4n]');
+legend('y[n]', 'z[n]','Location','best');
+
+% Relationship (3): z[n] == x[n]
+fprintf("(3) Relationship: z[n] = x[n] (upsample by 4 then downsample by 4 recovers x[n]).\n");
+
+%% (4) y[n] = x[4n],  z[n] = y[n/4]; plot both and state relationship
+[yD, nyD] = x_of_Mn(x, nx, 4);               % down by 4
+[zU, nzU] = x_of_n_over_M(yD, nyD, 4);       % then up by 4 (zeros inserted)
+
+figure;
+stem(nyD, yD, 'filled'); hold on;
+stem(nzU, zU, 'filled'); grid on;
+xlabel('n'); ylabel('amplitude');
+title('Part (4): y[n] = x[4n],  z[n] = y[n/4]');
+legend('y[n]', 'z[n]','Location','best');
+
+% Relationship (4): z[n] equals x[n] only at n multiples of 4; zero elsewhere
+fprintf("(4) Relationship: z[n] equals x[n] only at n = 0,4,8,... (multiples of 4);\n");
+fprintf("    at other n, z[n] = 0 (downsample lost info; upsample inserts zeros).\n");
+
+%% ----- Helper functions (DT scaling) -----
+function [y, ny] = x_of_n_over_M(x, nx, M)
+% y[n] = x[n/M], DT upsampling by integer M via zero insertion.
+% nx must be contiguous integers.
+    nx = nx(:).'; x = x(:).';
+    ny = (nx(1)*M):(nx(end)*M);              % expanded index support
+    y  = zeros(size(ny));
+    mask = (mod(ny, M)==0);
+    nsrc = ny(mask)/M;                       % source integer indices
+    k = nsrc - nx(1) + 1;                    % positions in x
+    valid = (k>=1 & k<=numel(x));
+    y(mask) = x(k(valid));
+end
+
+function [z, nz] = x_of_Mn(x, nx, M)
+% z[n] = x[M n], DT downsampling by integer M (keep every M-th sample).
+    nx = nx(:).'; x = x(:).';
+    nz = ceil(nx(1)/M):floor(nx(end)/M);
+    k  = M*nz - nx(1) + 1;                   % positions in x
+    valid = (k>=1 & k<=numel(x));
+    z = zeros(size(nz));
+    z(valid) = x(k(valid));
+end
