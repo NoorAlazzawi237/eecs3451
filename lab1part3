@@ -1,0 +1,48 @@
+%% EECS3451 — Input impedance and source current, plus plots
+
+clear; clc; close all
+
+% -------- Circuit impedances (at operating frequency) --------
+Zs = 1 - 1i*3;        % series: 1Ω - j3Ω
+ZL = 1i*7;            % inductor j7Ω
+ZR = 10;              % resistor 10Ω
+
+% Parallel of j7 and 10
+Zp = (ZL*ZR) / (ZL + ZR);
+
+% Equivalent input impedance
+Zi = Zs + Zp;
+
+% Rectangular and polar forms
+magZi = abs(Zi);
+angZi_deg = rad2deg(angle(Zi));
+
+fprintf('Zi (rectangular) = %.6f %+.6fj ohms\n', real(Zi), imag(Zi));
+fprintf('Zi (polar)       = %.6f ∠ %.6f° ohms\n\n', magZi, angZi_deg);
+
+% -------- Source and current phasor --------
+Vs_amp = 50;          % amplitude of cosine source (V)
+T = 0.2;              % period (s)
+f = 1/T;              % Hz
+w = 2*pi*f;           % rad/s
+
+% Current phasor Is = Vs/Zi (cosine reference)
+Is_mag = Vs_amp / magZi;
+Is_ang_deg = -angZi_deg;
+
+fprintf('Is (polar)       = %.6f ∠ %.6f° A\n\n', Is_mag, Is_ang_deg);
+
+% -------- Time-domain waveforms for 2 periods --------
+t = linspace(0, 2*T, 2000);
+vs = Vs_amp * cos(w*t);
+is = Is_mag * cos(w*t + deg2rad(Is_ang_deg));
+
+% -------- Plot --------
+figure;
+plot(t, vs, 'LineWidth', 1.5); hold on;
+plot(t, is, 'LineWidth', 1.5);
+grid on; xlim([0 2*T]);
+xlabel('Time t (s)');
+ylabel('Amplitude');
+title('Source voltage v_s(t) and input current i_s(t) over 2 periods');
+legend('v_s(t) [V]', 'i_s(t) [A]', 'Location','best');
