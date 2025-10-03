@@ -1,0 +1,49 @@
+%% Question 5 - Complete Solution
+% No loops used as required
+
+%% Part (a)
+t = -5:0.01:5;
+
+% Create the original signal x(t)
+sgn_t = sign(t);
+exponent = exp(0.25*t + 1j*2*pi*t);
+x_t = -3 * sgn_t .* exponent;
+
+% Plot real and imaginary components of x(t)
+figure;
+subplot(2,1,1);
+plot(t, real(x_t), 'b-', 'LineWidth', 1.5);
+title('Real Component of x(t)');
+xlabel('Time t');
+ylabel('Real(x(t))');
+grid on;
+
+subplot(2,1,2);
+plot(t, imag(x_t), 'r-', 'LineWidth', 1.5);
+title('Imaginary Component of x(t)');
+xlabel('Time t');
+ylabel('Imag(x(t))');
+grid on;
+
+%% Part (b)
+% Create rectangular pulse rect(t/4)
+rect_pulse = (abs(t) <= 2);
+
+% Create the new signal x_new(t)
+x_new = x_t .* rect_pulse;
+
+% Plot real and imaginary components of x_new(t)
+figure;
+subplot(2,1,1);
+plot(t, real(x_new), 'b-', 'LineWidth', 1.5);
+title('Real Component of x_{new}(t)');
+xlabel('Time t');
+ylabel('Real(x_{new}(t))');
+grid on;
+
+subplot(2,1,2);
+plot(t, imag(x_new), 'r-', 'LineWidth', 1.5);
+title('Imaginary Component of x_{new}(t)');
+xlabel('Time t');
+ylabel('Imag(x_{new}(t))');
+grid on;
