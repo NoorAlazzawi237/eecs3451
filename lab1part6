@@ -1,32 +1,33 @@
+%% Q6 — Plot x(t) and 2x(t+1) on the same graph
+clear; clc; close all;
 
-% Define shifted-scaled signal: 2x(t+1)
-t_shift = t + 1;  % argument shift
-x_shift = zeros(size(t));
+% Time axis wide enough to show both x(t) (defined on [-2,2]) and x(t+1)
+t = linspace(-3, 2, 2001);
 
-% Region 1: -2 <= (t+1) < 0
-mask1 = (t_shift >= -2 & t_shift < 0);
-x_shift(mask1) = 0.25 * t_shift(mask1);
+% ---- piecewise function x(t) as a helper (vectorized) ----
+xt = @(tau) piecewise_x(tau);
 
-% Region 2: 0 <= (t+1) < 0.5
-mask2 = (t_shift >= 0 & t_shift < 0.5);
-x_shift(mask2) = 1.5;
+% Signals
+x_t   = xt(t);          % x(t)
+y_t   = 2*xt(t+1);      % 2 x(t+1)
 
-% Region 3: 0.5 <= (t+1) <= 2
-mask3 = (t_shift >= 0.5 & t_shift <= 2);
-x_shift(mask3) = -t_shift(mask3) + 2;
+% ---- Plot ----
+figure('Color','w');
+plot(t, x_t, 'LineWidth', 1.6); hold on;
+plot(t, y_t, '--', 'LineWidth', 1.6);
+grid on; xlabel('t'); ylabel('Amplitude');
+title('x(t) and 2x(t+1)');
+legend('x(t)','2x(t+1)','Location','best');
 
-x_shift = 2 * x_shift;  % scaling
+% ========= Helper: piecewise definition of x(t) =========
+function x = piecewise_x(t)
+    x = nan(size(t));                      % use NaN outside support
+    idx1 = (-2 <= t) & (t < 0);
+    idx2 = (0 <= t) & (t < 0.5);
+    idx3 = (0.5 <= t) & (t <= 2);
 
-% -------- Plot 1: x(t) --------
-figure;
-plot(t, x, 'b', 'LineWidth', 1.5); hold on;
-grid on;
-xlabel('t'); ylabel('x(t)');
-title('Original signal x(t)');
+    x(idx1) = 0.25*t(idx1);
+    x(idx2) = 1.5;
+    x(idx3) = -t(idx3) + 2;
+end
 
-% -------- Plot 2: 2x(t+1) --------
-figure;
-plot(t, x_shift, 'r', 'LineWidth', 1.5); hold on;
-grid on;
-xlabel('t'); ylabel('2x(t+1)');
-title('Shifted and scaled signal 2x(t+1)');
