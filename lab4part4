@@ -1,0 +1,73 @@
+clear; close all; clc;
+
+[x, fs]  = audioread('CScale.wav');
+[z, fsZ] = audioread('CScaleZ.wav');   
+
+% (1) FFT of full signals
+N  = length(x);
+Xf = fft(x);
+Zf = fft(z);
+f  = (0:N-1)*fs/N;
+
+figure;
+subplot(2,1,1);
+plot(f, abs(Xf));
+xlabel('Frequency (Hz)'); ylabel('|X(f)|');
+title('FFT of CScale.wav'); xlim([0 3000]);
+
+subplot(2,1,2);
+plot(f, abs(Zf));
+xlabel('Frequency (Hz)'); ylabel('|Z(f)|');
+title('FFT of CScaleZ.wav'); xlim([0 3000]);
+
+% (2) samples per key
+window_length = fs * 0.5;    % 0.5 s at 8 kHz = 4000
+num_keys      = 8;
+
+% (3) split into 8 windows
+x_keys = zeros(window_length, num_keys);
+for k = 1:num_keys
+    i1 = (k-1)*window_length + 1;
+    i2 = k*window_length;
+    x_keys(:,k) = x(i1:i2);
+end
+
+% (4) FFT of each key -> spect(matrix)
+spect = zeros(window_length, num_keys);
+for k = 1:num_keys
+    spect(:,k) = fft(x_keys(:,k));
+end
+
+% (5) plot spectrogram-style (manual)
+spect_mag = 20*log10(abs(spect) + eps);
+t = (0:window_length:(length(x)-window_length))/fs;
+f = (1:window_length)*fs/window_length;
+
+figure;
+imagesc(t, f, spect_mag);
+axis xy;
+xlabel('Time (s)'); ylabel('Frequency (Hz)');
+title('Manual spectrogram of CScale.wav');
+colorbar;
+
+% Repeat for CScaleZ
+z_keys = zeros(window_length, num_keys);
+for k = 1:num_keys
+    i1 = (k-1)*window_length + 1;
+    i2 = k*window_length;
+    z_keys(:,k) = z(i1:i2);
+end
+
+spectZ = zeros(window_length, num_keys);
+for k = 1:num_keys
+    spectZ(:,k) = fft(z_keys(:,k));
+end
+
+spectZ_mag = 20*log10(abs(spectZ) + eps);
+
+figure;
+imagesc(t, f, spectZ_mag);
+axis xy;
+xlabel('Time (s)'); ylabel('Frequency (Hz)');
+title('Manual spectrogram of CScaleZ.wav');
+colorbar;
