@@ -1,0 +1,21 @@
+%% PART 1 – Q1: Time-varying frequency signal (sound1.wav)
+clear; close all; clc;
+
+fs = 8000;
+a  = 0:1/fs:2;           % time 0–2 s
+f  = 150 * a;            % f(t) = 150 t
+x  = sin(2*pi.*f.*a);    % signal
+
+figure;
+subplot(2,1,1);
+plot(a, f);
+xlabel('Time (s)'); ylabel('Frequency (Hz)');
+title('Q1: Instantaneous frequency');
+
+subplot(2,1,2);
+plot(a, x);
+xlabel('Time (s)'); ylabel('Amplitude');
+title('Q1: Signal x(t)');
+
+audiowrite('sound1.wav', x, fs);
+sound(x, fs);
