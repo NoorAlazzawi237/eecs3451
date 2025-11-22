@@ -1,0 +1,67 @@
+clear all;
+close all;
+
+% Sampling frequency and note duration
+fs = 8000;          % samples per second
+dur = 0.5;          % duration of each note in seconds
+t = 0 : 1/fs : dur - 1/fs;   % time vector for one note (0.5 s)
+
+% Piano key numbers for C major scale
+keys = [40 42 44 45 47 49 51 52];
+
+% Pre-allocate array for the full scale
+CScale = [];
+
+% Generate each note using f(k) = 440 * 2^((k - 49) / 12)
+for k = 1:length(keys)
+    fk = 440 * 2^((keys(k) - 49) / 12);   % frequency for this key
+    note = sin(2 * pi * fk * t);          % sine wave for this note
+    CScale = [CScale note];               % concatenate into full scale
+end
+
+% Normalize to range [-1, 1] to avoid clipping
+CScale = CScale / max(abs(CScale));
+
+% Save C major scale to WAV file
+audiowrite('CScale.wav', CScale, fs);
+
+% ------------------ Playback at different sampling rates ------------------
+
+% Read the saved CScale.wav
+[y, fs_read] = audioread('CScale.wav');
+
+% Listen at 4000 Hz (lower pitch, slower)
+sound(y, 4000);
+pause(length(y) / 4000 + 1);  % wait until playback finishes
+
+% Listen at 8000 Hz (original)
+sound(y, 8000);
+pause(length(y) / 8000 + 1);
+
+% Listen at 16000 Hz (higher pitch, faster)
+sound(y, 16000);
+pause(length(y) / 16000 + 1);
+
+% ------------------ Time-Reversed Version: CScaleZ.wav ------------------
+
+% Reverse the samples to create descending scale
+CScaleZ = flipud(y);   % or: y(end:-1:1)
+
+% Save reversed scale
+audiowrite('CScaleZ.wav', CScaleZ, fs_read);
+
+% Optional: play reversed scale
+sound(CScaleZ, fs_read);
+
+figure;
+plot(CScale);
+title('CScale.wav – Time-Domain Waveform (All 8 Notes)');
+xlabel('Sample Index');
+ylabel('Amplitude');
+
+% Add vertical lines at each note boundary
+hold on;
+for n = 1:7
+    xline(n * 4000, 'r--', 'LineWidth', 1);
+end
+hold off;
