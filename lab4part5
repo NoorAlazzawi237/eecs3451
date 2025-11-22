@@ -1,0 +1,73 @@
+clear all;
+close all;
+
+% Read ascending and descending scales
+[x, fs]  = audioread('CScale.wav');    % ascending
+[xz, ~]  = audioread('CScaleZ.wav');   % descending (time-reversed)
+
+% Each note is 0.5 s, sampling frequency is 8000 Hz
+window_length = 0.5 * fs;              % 0.5 * 8000 = 4000 samples
+N = window_length;
+
+% ---------- Manual STFT for CScale.wav (ascending) ----------
+
+num_frames = floor(length(x) / window_length);
+spect = [];
+
+for k = 1:num_frames
+    % Windowed segment for note k
+    idx_start = (k-1) * window_length + 1;
+    idx_end   = k * window_length;
+    frame     = x(idx_start:idx_end);
+
+    % N-point FFT of this frame
+    Xk = fft(frame, N);
+
+    % Store as a column in spect
+    spect = [spect, Xk(:)];
+end
+
+% Convert to magnitude in dB
+spect_mag = 20 * log10(abs(spect) + eps);
+
+% Time and frequency axes
+t = (0:window_length:(length(x)-window_length)) / fs;  % seconds
+f = (0:N-1) * fs / N;                                  % Hz
+
+% Plot manual spectrogram for CScale.wav
+figure;
+imagesc(t, f, spect_mag);
+axis xy;
+xlabel('Time (s)');
+ylabel('Frequency (Hz)');
+title('Manual Spectrogram of CScale.wav (Ascending Scale)');
+colormap(jet);
+colorbar;
+
+% ---------- Manual STFT for CScaleZ.wav (descending) ----------
+
+num_frames_z = floor(length(xz) / window_length);
+spectZ = [];
+
+for k = 1:num_frames_z
+    idx_start = (k-1) * window_length + 1;
+    idx_end   = k * window_length;
+    frameZ    = xz(idx_start:idx_end);
+
+    XkZ = fft(frameZ, N);
+    spectZ = [spectZ, XkZ(:)];
+end
+
+spectZ_mag = 20 * log10(abs(spectZ) + eps);
+
+tZ = (0:window_length:(length(xz)-window_length)) / fs;
+fZ = (0:N-1) * fs / N;
+
+figure;
+imagesc(tZ, fZ, spectZ_mag);
+axis xy;
+xlabel('Time (s)');
+ylabel('Frequency (Hz)');
+title('Manual Spectrogram of CScaleZ.wav (Descending Scale)');
+colormap(jet);
+colorbar;
