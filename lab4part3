@@ -1,0 +1,80 @@
+clear; close all; clc;
+
+fs = 8000;
+
+% (1) Read original CScale
+[x, fs1] = audioread('CScale.wav');
+fprintf('Q3: CScale.wav min = %.4f, max = %.4f\n', min(x), max(x));
+
+N = length(x);
+X = fft(x);
+f = (0:N-1)*fs1/N;
+
+figure;
+plot(f, abs(X));
+xlabel('Frequency (Hz)'); ylabel('|X(f)|');
+title('Q3: FFT magnitude of CScale.wav');
+xlim([0 3000]);
+
+% (2) Make big amplitude version CScale2.wav
+dur_note = 0.5;
+t        = 0:1/fs:dur_note-1/fs;
+keys     = [40 42 44 45 47 49 51 52];
+key_to_freq = @(k) 440 * 2.^((k - 49)/12);
+
+x1 = [];
+for k = keys
+    f0   = key_to_freq(k);
+    note = sin(2*pi*f0*t);
+    x1   = [x1, note];
+end
+
+x_big = 20 * x1.';                 % column vector, huge amplitude
+audiowrite('CScale2.wav', x_big, fs);
+
+% (3) Compare CY1 vs CY2
+[CY1, fs1] = audioread('CScale.wav');
+[CY2, fs2] = audioread('CScale2.wav');
+
+sound(CY1, fs1); pause(length(CY1)/fs1 + 1);
+sound(CY2, fs2);
+
+n_show = floor(fs1*0.02);          % first 20 ms
+
+figure;
+subplot(2,1,1);
+plot((0:n_show-1)/fs1, CY1(1:n_show));
+xlabel('Time (s)'); ylabel('Amp');
+title('CY1 waveform (original)');
+
+subplot(2,1,2);
+plot((0:n_show-1)/fs2, CY2(1:n_show));
+xlabel('Time (s)'); ylabel('Amp');
+title('CY2 waveform (clipped)');
+
+% (4) FFTs of CY1 and CY2
+N1 = length(CY1); N2 = length(CY2);
+Y1 = fft(CY1);   Y2 = fft(CY2);
+f1 = (0:N1-1)*fs1/N1;
+f2 = (0:N2-1)*fs2/N2;
+
+figure;
+subplot(2,1,1);
+plot(f1, abs(Y1));
+xlabel('Frequency (Hz)'); ylabel('|Y1|');
+title('FFT of CY1');
+xlim([0 3000]);
+
+subplot(2,1,2);
+plot(f2, abs(Y2));
+xlabel('Frequency (Hz)'); ylabel('|Y2|');
+title('FFT of CY2 (clipped)');
+xlim([0 3000]);
+
+% (5) sound1.wav vs sound2.wav
+[s1, fs_s] = audioread('sound1.wav');
+s2 = 20 * s1;
+audiowrite('sound2.wav', s2, fs_s);
+
+sound(s1, fs_s); pause(length(s1)/fs_s + 1);
+sound(s2, fs_s);
