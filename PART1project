@@ -1,0 +1,75 @@
+%% EECS3451 Mini Project - Part 1
+% Bandpass FIR filter design using firpmord + firpm
+% Specifications come from project manual.
+
+clear; close all; clc;
+
+%% Given specifications
+fs   = 8000;         % Sampling frequency [Hz]
+
+fs1  = 500;          % Stopband edge 1
+fp1  = 1500;         % Passband edge 1
+fp2  = 2000;         % Passband edge 2
+fs2  = 3000;         % Stopband edge 2
+
+Rp1  = 0.01;         % Passband ripple <= 0.01
+Rs1  = 0.01;         % Stopband ripple (0–500 Hz)
+Rs2  = 0.001;        % Stopband ripple (3000–4000 Hz)
+
+%% Step 1: Use firpmord to estimate the filter order
+F   = [fs1 fp1 fp2 fs2];     % Band edges
+A   = [0    1   0];          % Desired amplitude in each band
+Dev = [Rs1  Rp1 Rs2];        % Allowed ripples
+
+[N, Fo, Ao, W] = firpmord(F, A, Dev, fs);
+
+fprintf('Estimated filter order N = %d (filter length = %d)\n', N, N+1);
+
+%% Step 2: Design FIR filter using firpm (Parks–McClellan)
+b = firpm(N, Fo, Ao, W);
+
+%% Display filter coefficients
+disp('Filter coefficients (b):');
+disp(b.');
+
+%% Step 3: Frequency response (magnitude + phase)
+Nfft = 4096;
+[H, w] = freqz(b, 1, Nfft, fs);
+
+figure;
+subplot(2,1,1);
+plot(w, 20*log10(abs(H) + eps));
+grid on;
+xlabel('Frequency (Hz)');
+ylabel('Magnitude (dB)');
+title('Bandpass FIR Magnitude Response');
+
+% Mark band edges
+xline(fs1,'--'); xline(fp1,'--'); xline(fp2,'--'); xline(fs2,'--');
+
+subplot(2,1,2);
+plot(w, unwrap(angle(H)));
+grid on;
+xlabel('Frequency (Hz)');
+ylabel('Phase (radians)');
+title('Bandpass FIR Phase Response');
+
+%% Step 4: Verify ripple specifications
+mag = abs(H);
+
+% Index sets
+pass_idx  = (w >= fp1) & (w <= fp2);
+stop1_idx = (w >= 0)   & (w <= fs1);
+stop2_idx = (w >= fs2) & (w <= fs/2);
+
+% Compute ripples
+pass_mag  = mag(pass_idx);
+delta_p   = max(abs(pass_mag - 1));
+
+stop1_mag = max(mag(stop1_idx));
+stop2_mag = max(mag(stop2_idx));
+
+fprintf('\nVerification of filter specs:\n');
+fprintf('Passband ripple (max |H-1|)      = %.6f (spec <= %.6f)\n', delta_p, Rp1);
+fprintf('Stopband ripple 1 (0-500 Hz)     = %.6f (spec <= %.6f)\n', stop1_mag, Rs1);
+fprintf('Stopband ripple 2 (3000-4000 Hz) = %.6f (spec <= %.6f)\n', stop2_mag, Rs2);
