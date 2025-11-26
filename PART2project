@@ -1,0 +1,153 @@
+%% EECS3451 Mini Project - Part 2
+% Noise identification and removal from music_noisy.wav
+% Methods: time-domain FIR filtering + frequency-domain masking
+
+clear; close all; clc;
+
+%% 1. Load noisy music
+% Change this path if your file is somewhere else
+[yn, fs] = audioread('/Users/nooralazzawi/Downloads/music_noisy 2.wav');
+yn = yn(:,1);              % in case of stereo, take left channel
+
+N  = length(yn);
+t  = (0:N-1)/fs;
+
+fprintf('Sampling frequency = %d Hz, length = %d samples (%.2f s)\n', ...
+        fs, N, N/fs);
+
+%% 2. Time-domain analysis: waveform and spectrum
+figure;
+subplot(2,1,1);
+plot(t, yn);
+xlabel('Time (s)');
+ylabel('Amplitude');
+title('Noisy Music - Time Domain');
+grid on;
+
+% Magnitude spectrum
+Nfft = 2^nextpow2(N);
+Y    = fft(yn, Nfft);
+f    = (0:Nfft-1)*fs/Nfft;
+
+subplot(2,1,2);
+plot(f(1:Nfft/2), 20*log10(abs(Y(1:Nfft/2)) + eps));
+xlabel('Frequency (Hz)');
+ylabel('Magnitude (dB)');
+title('Noisy Music - Magnitude Spectrum');
+grid on;
+
+%% 3. TIME-DOMAIN METHOD: bandpass FIR filter (using fir1, no warnings)
+
+% Based on typical speech/music band and your plots
+musicPass = [300 3400];      % Hz
+
+% Choose a reasonable FIR order (length = N_bp + 1)
+N_bp = 200;                   % you can mention this in your report
+Wn   = musicPass/(fs/2);      % normalized cutoff frequencies
+
+% Design bandpass FIR with a Hamming window
+bm = fir1(N_bp, Wn, 'bandpass', hamming(N_bp+1));
+
+fprintf('\nTime-domain method: music bandpass filter order N_bp = %d\n', N_bp);
+
+% Filter the noisy signal
+y_td = filter(bm, 1, yn);
+Y_td = fft(y_td, Nfft);
+
+figure;
+subplot(2,1,1);
+plot(t, y_td);
+xlabel('Time (s)');
+ylabel('Amplitude');
+title('Time-domain Filtered Music - Waveform');
+grid on;
+
+subplot(2,1,2);
+plot(f(1:Nfft/2), 20*log10(abs(Y_td(1:Nfft/2)) + eps));
+xlabel('Frequency (Hz)');
+ylabel('Magnitude (dB)');
+title('Time-domain Filtered Music - Magnitude Spectrum');
+grid on;
+
+% ---- Normalize before saving to avoid clipping warning ----
+y_td_norm = y_td / (max(abs(y_td)) + eps);
+audiowrite('music_denoised_time_domain.wav', y_td_norm, fs);
+
+%% 4. FREQUENCY-DOMAIN METHOD: masking specific noise bands
+
+Y_fd = Y;    % copy original spectrum
+
+% From your spectrum: strong tones at ~750 Hz, ~1500 Hz,
+% and a wide noise band roughly 3–3.4 kHz
+noiseBands = [ ...
+    700   800;    % around 750 Hz spike
+    1450  1550;   % around 1500 Hz spike
+    3000  3400;   % wide noise band around 3–3.4 kHz
+];
+
+% Build mask (1 = keep, 0 = remove)
+mask = ones(size(Y_fd));
+
+for k = 1:size(noiseBands,1)
+    f_low  = noiseBands(k,1);
+    f_high = noiseBands(k,2);
+
+    % indices in lower and upper halves of the spectrum
+    idx = (f >= f_low & f <= f_high) | ...
+          (f >= fs - f_high & f <= fs - f_low);
+
+    mask(idx) = 0;
+end
+
+% Apply mask
+Y_masked = Y_fd .* mask;
+
+% Inverse FFT back to time-domain
+y_fd = real(ifft(Y_masked, Nfft));
+y_fd = y_fd(1:N);        % trim to original length
+
+Y_fd2 = fft(y_fd, Nfft);
+
+figure;
+subplot(2,1,1);
+plot(t, y_fd);
+xlabel('Time (s)');
+ylabel('Amplitude');
+title('Frequency-domain Processed Music - Waveform');
+grid on;
+
+subplot(2,1,2);
+plot(f(1:Nfft/2), 20*log10(abs(Y_fd2(1:Nfft/2)) + eps));
+xlabel('Frequency (Hz)');
+ylabel('Magnitude (dB)');
+title('Frequency-domain Processed Music - Magnitude Spectrum');
+grid on;
+
+% ---- Normalize before saving to avoid clipping warning ----
+y_fd_norm = y_fd / (max(abs(y_fd)) + eps);
+audiowrite('music_denoised_freq_domain.wav', y_fd_norm, fs);
+
+%% 5. Comparison plots
+
+figure;
+subplot(3,1,1);
+plot(t, yn);
+title('Original Noisy Music');
+xlabel('Time (s)');
+ylabel('Amplitude');
+grid on;
+
+subplot(3,1,2);
+plot(t, y_td);
+title('Time-domain Denoised Music');
+xlabel('Time (s)');
+ylabel('Amplitude');
+grid on;
+
+subplot(3,1,3);
+plot(t, y_fd);
+title('Frequency-domain Denoised Music');
+xlabel('Time (s)');
+ylabel('Amplitude');
+grid on;
+
